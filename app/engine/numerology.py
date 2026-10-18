@@ -60,8 +60,11 @@ def compute(year: int, month: int, day: int, name: str | None = None, today: dat
         tot = sum(PYTH[c] for c, _ in letters)
         soul = sum(PYTH[c] for c, v in letters if v)
         pers = sum(PYTH[c] for c, v in letters if not v)
-        out["destiny"] = reduce_num(tot)
-        out["soul"] = reduce_num(soul)
-        out["personality"] = reduce_num(pers)
-        out["maturity"] = reduce_num(out["life_path"] + out["destiny"])
+        if tot > 0:
+            out["destiny"] = reduce_num(tot)
+            out["maturity"] = reduce_num(out["life_path"] + out["destiny"])
+        if soul > 0:
+            out["soul"] = reduce_num(soul)
+        if pers > 0:
+            out["personality"] = reduce_num(pers)
     return out

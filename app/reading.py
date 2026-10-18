@@ -129,7 +129,10 @@ def numerology_text(n: dict) -> dict:
     for k in order:
         if k not in n:
             continue
-        v = n[k]; r = N["roles"][k]; t = N[str(v)]
+        v = n[k]
+        if not v:
+            continue
+        r = N["roles"][k]; t = N[str(v)]
         items.append({"key": k, "role": r["name"], "value": v, "intro": r["intro"], "title": t["title"], "text": t["text"],
                       "strength": t["strength"], "challenge": t["challenge"], "tip": t["tip"], "master": v in (11, 22, 33)})
     py = {"value": n["personal_year"], "year": n["personal_year_for"], "text": N["personal_year"][str(n["personal_year"])]}
