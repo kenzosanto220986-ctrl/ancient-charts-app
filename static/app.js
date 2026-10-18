@@ -142,6 +142,8 @@
     rd.ninety_days.forEach((x) => { if (x.phase !== phase) { if (h) h += "</ul>"; phase = x.phase; h += `<h3>${esc(phase)}</h3><ul class="todo">`; } h += `<li>${esc(x.text)}</li>`; });
     $("#d90").innerHTML = h + "</ul>";
 
+    renderHealth(rd.health);
+
     // chat
     $("#log").innerHTML = "";
     addMsg("bot", "Γεια σου. Έχω μπροστά μου τον χάρτη σου. Ρώτα με κάτι καθημερινό: μια απόφαση, ένα συναίσθημα, τη μέρα σου. Δίνω μόνο συμβολική καθοδήγηση.");
@@ -150,6 +152,96 @@
     $("#chips").innerHTML = ["Τι να προσέξω σήμερα;", "Πώς πάω στις σχέσεις;", "Τι με βοηθά στη δουλειά;", "Νιώθω άγχος· τι κάνω;", "Ποιο είναι το έτος μου;"].map((t) => `<button type="button" class="chip">${esc(t)}</button>`).join("");
     $("#results").scrollIntoView({ behavior: "smooth" });
   }
+
+  // ---------- health (symbolic)
+  function renderHealth(h) {
+    $("#h-intro").textContent = h.intro;
+    $("#h-top").innerHTML = `<strong>${esc(h.disclaimer_top.split(":")[0])}:</strong>${esc(h.disclaimer_top.slice(h.disclaimer_top.indexOf(":") + 1))}`;
+    $("#h-sci").textContent = h.science_note;
+    $("#h-checkup").innerHTML = `${esc(h.checkup)} <i>${esc(h.stoic)}</i>`;
+    $("#h-bottom").innerHTML = `<strong>${esc(h.disclaimer_bottom.split(":")[0])}:</strong>${esc(h.disclaimer_bottom.slice(h.disclaimer_bottom.indexOf(":") + 1))}`;
+    document.querySelectorAll("#h-tabs [role=tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === "body" ? "true" : "false"));
+    ["body", "watch", "time", "east"].forEach((k) => { $("#h-" + k).hidden = k !== "body"; });
+
+    // 1. body map
+    const bm = h.bodymap, hl = bm.signs.filter((s) => s.marks.length);
+    $("#h-body").innerHTML = `
+      <p class="sub">Κάθε ζώδιο «κυβερνά» συμβολικά μια περιοχή του σώματος. Οι χρυσές περιοχές είναι τα ζώδια όπου βρίσκονται σημεία του χάρτη σου. Πάτησε μια περιοχή για να δεις περισσότερα.</p>
+      <div class="bmwrap">
+        <div class="bmsvg" id="h-svg">${bm.svg}</div>
+        <div class="bmlist">
+          ${hl.length ? `<p class="legend"><span class="dot"></span> Τονισμένα στο χάρτη σου: ${hl.map((s) => `<b>${esc(s.glyph)} ${esc(s.name)}</b> (${esc(s.marks.join(", "))})`).join(" · ")}</p>` : ""}
+          ${bm.signs.map((s) => `
+            <details class="hsign${s.marks.length ? " on" : ""}" id="hs-${esc(s.key)}" ${s.marks.length ? "open" : ""}>
+              <summary><span class="gl">${esc(s.glyph)}</span> <b>${esc(s.name)}</b> <span class="muted">${esc(s.areas.slice(0, 3).join(", "))}</span>${s.marks.length ? ` <span class="tagm">${esc(s.marks.join(" · "))}</span>` : ""}</summary>
+              <p><b>Περιοχές:</b> ${esc(s.areas.join(", "))}.</p>
+              <p>${esc(s.tendency)}</p>
+              <p class="care"><b>Μικρό βήμα:</b> ${esc(s.care)}</p>
+            </details>`).join("")}
+        </div>
+      </div>
+      <h3>Ανά πλανήτη</h3>
+      <p class="sub">Κάθε πλανήτης αντιστοιχεί συμβολικά σε ένα σύστημα του σώματος. Δες πού βρίσκεται ο καθένας στο χάρτη σου.</p>
+      <div class="hplanets">${bm.planets.map((p) => `
+        <details class="hplanet"><summary><span class="gl">${esc(p.glyph)}</span> <b>${esc(p.name)}</b> <span class="muted">${esc(p.areas.slice(0, 3).join(", "))}</span></summary>
+          <p class="muted">Στο χάρτη σου: ${esc(p.sign_in)}${p.house ? ", " + p.house + "ος οίκος" : ""}.</p>
+          <p>${esc(p.theme)}</p><p>${esc(p.tendency)}</p><p class="care"><b>Μικρό βήμα:</b> ${esc(p.tip)}</p>
+        </details>`).join("")}</div>`;
+
+    // 2. watch points
+    let wh = "", grp = "";
+    h.watch.forEach((w) => {
+      if (w.group_name !== grp) { grp = w.group_name; wh += `<h3>${esc(grp)}</h3>`; }
+      wh += `<article class="wp"><h4>${esc(w.title)}${w.tightness ? ` <span class="chipt">${esc(w.tightness)}</span>` : ""}</h4>
+        <p class="muted">Περιοχή: ${esc(w.area)}</p><p>${esc(w.tendency)}</p><p class="care"><b>Μικρό βήμα:</b> ${esc(w.tip)}</p></article>`;
+    });
+    const notes = h.notes.concat(h.watch_skipped.length ? ["Δεν εμφανίζονται: " + h.watch_skipped.join(" ")] : []);
+    $("#h-watch").innerHTML = `<p class="sub">Υπολογίζονται από τον δικό σου χάρτη. Είναι συμβολικές «τάσεις» και «ευαίσθητα σημεία», όχι διαγνώσεις. Κάθε σημείο έχει ένα μικρό, ήπιο βήμα φροντίδας.</p>` + wh +
+      notes.map((n) => `<p class="note-s">ℹ️ ${esc(n)}</p>`).join("");
+
+    // 3. timeline
+    const tl = h.timeline;
+    const rowsHtml = (rows) => `<div class="tablewrap tlwrap"><table class="tl"><thead><tr><th>Ηλικία</th><th>Έτη</th><th>Θέμα</th><th>Περιοχές</th><th>Τι να προσέξεις</th></tr></thead><tbody>` +
+      rows.map((r) => `<tr class="k-${esc(r.kind)}"><td data-l="Ηλικία">${esc(r.age_text)}</td><td data-l="Έτη">${esc(r.years)}<small>${esc(r.dates)}</small></td>
+        <td data-l="Θέμα"><b>${r.kind === "milestone" ? "★ " : r.kind === "cycle" ? "◦ " : ""}${esc(r.title)}</b>${r.exact ? `<small>ακριβής: ${esc(r.exact)}</small>` : ""}</td>
+        <td data-l="Περιοχές">${esc(r.areas)}</td><td data-l="Τι να προσέξεις">${esc(r.watch)}<small>Βοηθά: ${esc(r.tip)}.</small></td></tr>`).join("") + `</tbody></table></div>`;
+    const n10 = tl.next10;
+    $("#h-time").innerHTML = `
+      <p class="sub">${esc(tl.intro)}</p>
+      ${tl.notes.map((n) => `<p class="note-s">ℹ️ ${esc(n)}</p>`).join("")}
+      <p class="note-s">🌙 ${esc(tl.lunar)}</p>
+      <h3>Οι επόμενοι 10 χρόνοι (${esc(n10.from.slice(0, 4))}–${esc(n10.to.slice(0, 4))})</h3>
+      <div class="years">${n10.by_year.map((y) => `<div class="yr"><b>${y.year}</b><small>ηλικία ~${y.age}</small>${y.items.length ? `<ul>${y.items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : `<span class="muted">ήρεμη χρονιά</span>`}</div>`).join("")}</div>
+      ${n10.rows.length ? rowsHtml(n10.rows) : "<p>Δεν υπάρχουν σημαντικές περίοδοι στο διάστημα αυτό.</p>"}
+      <h3>Όλη η ζωή ανά ηλικιακή ομάδα</h3>
+      <p class="note-s">★ σταθμός ζωής (επιστροφές και βασικοί κύκλοι) · ◦ κύκλος ρυθμού</p>
+      ${tl.bands.map((b) => `<details class="band"><summary><b>${esc(b.label)}</b> ετών · ${esc(b.name)} <span class="muted">(${b.rows.length}${b.total > b.rows.length ? " από " + b.total : ""} περίοδοι)</span></summary>${b.rows.length ? rowsHtml(b.rows) : "<p>Καμία σημαντική περίοδος.</p>"}</details>`).join("")}
+      <p class="note-s">ℹ️ ${esc(tl.method)}</p>`;
+
+    // 4. Chinese + numbers
+    const c = h.chinese, nu = h.numbers;
+    $("#h-east").innerHTML = `
+      <h3>${esc(c.title)}</h3><p class="sub">${esc(c.intro)}</p>
+      <div class="tablewrap"><table class="tl cn"><thead><tr><th>Στοιχείο</th><th>Όργανα (παραδοσιακά)</th><th>Πυλώνες</th><th>Εικόνα</th></tr></thead><tbody>` +
+      c.rows.map((r) => `<tr class="st-${esc(r.status)}"><td data-l="Στοιχείο"><b>${esc(r.cn)} ${esc(r.name)}</b></td><td data-l="Όργανα">${esc(r.organs)}<small>${esc(r.emotion)} · ${esc(r.tissue)}</small></td>
+        <td data-l="Πυλώνες">${r.count} από ${c.n} <span class="chipt">${esc(r.status_label)}</span></td><td data-l="Εικόνα">${esc(r.text) || "—"}</td></tr>`).join("") + `</tbody></table></div>
+      ${c.balanced ? `<p>${esc(c.balanced)}</p>` : ""}
+      <p>${esc(c.day_master)}</p>
+      ${c.tips.length ? `<ul class="todo">${c.tips.map((t) => `<li><b>${esc(t.element)}:</b> ${esc(t.tip)}</li>`).join("")}</ul>` : ""}
+      <p class="note-s">ℹ️ ${esc(c.note)}</p>
+      <h3>${esc(nu.title)}</h3><p class="sub">${esc(nu.note)}</p>
+      <div class="nums">${nu.items.map((it) => `<div class="numcard"><div class="n">${it.value}</div><div><b>${esc(it.role)}</b><p>${esc(it.theme)}</p><p class="care"><b>Μικρό βήμα:</b> ${esc(it.tip)}</p></div></div>`).join("")}</div>`;
+  }
+  $("#h-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[role=tab]"); if (!b) return;
+    document.querySelectorAll("#h-tabs [role=tab]").forEach((x) => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+    ["body", "watch", "time", "east"].forEach((k) => { $("#h-" + k).hidden = k !== b.dataset.tab; });
+  });
+  $("#h-body").addEventListener("click", (e) => {
+    const g = e.target.closest(".zone"); if (!g) return;
+    const d = document.getElementById("hs-" + g.dataset.sign);
+    if (d) { d.open = true; d.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  });
 
   // ---------- chat
   function addMsg(who, text, cls = "") {

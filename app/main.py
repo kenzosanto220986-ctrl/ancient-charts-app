@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from . import service, chat
-from .engine import geo, astro
+from .engine import geo, astro, transits
 from .reading import lib
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(_app):
-    geo._index(); astro.eph(); astro._chiron_table()   # warm caches (city index ~2 s)
+    geo._index(); astro.eph(); astro._chiron_table(); transits._table(); transits._chiron_arrays()   # warm caches (city index ~2 s)
     yield
 
 
@@ -90,8 +90,12 @@ def chart(inp: ChartIn):
         raise HTTPException(400, str(e))
     _purge()
     sid = secrets.token_urlsafe(16)
-    SESSIONS[sid] = {"ts": time.time(), "res": {k: res[k] for k in ("input", "chart", "reading", "numerology", "time_known")},
-                     "summary": None, "history": []}
+    slim = {k: res[k] for k in ("input", "chart", "reading", "numerology", "time_known")}
+    # keep sessions small (512 MB host): the big health tables (timeline, SVG) are not needed by the chat after the summary is built
+    hh = res["reading"].get("health")
+    if hh:
+        slim["reading"] = {**res["reading"], "health": {"watch": [{"title": w["title"], "area": w["area"]} for w in hh["watch"]]}}
+    SESSIONS[sid] = {"ts": time.time(), "res": slim, "summary": None, "history": []}
     SESSIONS[sid]["summary"] = chat.chart_summary(res)
     res["session_id"] = sid
     res["chat"] = {"llm": bool(chat.provider())}

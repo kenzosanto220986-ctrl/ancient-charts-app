@@ -62,7 +62,7 @@
   <div id="results" hidden>
     <nav class="jump" aria-label="Ενότητες">
       <a href="#sec-chart">Χάρτης</a><a href="#sec-reading">Ανάγνωση</a><a href="#sec-aspects">Όψεις</a>
-      <a href="#sec-china">Κινεζικοί πυλώνες</a><a href="#sec-numbers">Αριθμοί</a><a href="#sec-90">90 μέρες</a><a href="#sec-chat">Συζήτηση</a>
+      <a href="#sec-china">Κινεζικοί πυλώνες</a><a href="#sec-numbers">Αριθμοί</a><a href="#sec-health">Υγεία (συμβολική)</a><a href="#sec-90">90 μέρες</a><a href="#sec-chat">Συζήτηση</a>
     </nav>
 
     <section class="card" id="sec-chart">
@@ -106,6 +106,25 @@
     <section class="card" id="sec-numbers">
       <h2>Αριθμολογία (πυθαγόρεια)</h2>
       <div id="num"></div>
+    </section>
+
+    <section class="card" id="sec-health">
+      <h2>Υγεία (συμβολική)</h2>
+      <p class="lead" id="h-intro"></p>
+      <aside class="note safety" id="h-top" role="note"></aside>
+      <p class="note-s" id="h-sci"></p>
+      <div class="tabs" role="tablist" aria-label="Ενότητες υγείας" id="h-tabs">
+        <button type="button" role="tab" id="tab-body" aria-controls="h-body" aria-selected="true" data-tab="body">Χάρτης σώματος</button>
+        <button type="button" role="tab" id="tab-watch" aria-controls="h-watch" aria-selected="false" data-tab="watch">Σημεία προσοχής</button>
+        <button type="button" role="tab" id="tab-time" aria-controls="h-time" aria-selected="false" data-tab="time">Χρονολόγιο ηλικιών</button>
+        <button type="button" role="tab" id="tab-east" aria-controls="h-east" aria-selected="false" data-tab="east">Κινεζική ιατρική και αριθμοί</button>
+      </div>
+      <div class="tabpanel" id="h-body" role="tabpanel" aria-labelledby="tab-body"></div>
+      <div class="tabpanel" id="h-watch" role="tabpanel" aria-labelledby="tab-watch" hidden></div>
+      <div class="tabpanel" id="h-time" role="tabpanel" aria-labelledby="tab-time" hidden></div>
+      <div class="tabpanel" id="h-east" role="tabpanel" aria-labelledby="tab-east" hidden></div>
+      <p class="note-s" id="h-checkup"></p>
+      <aside class="note safety" id="h-bottom" role="note"></aside>
     </section>
 
     <section class="card" id="sec-90">

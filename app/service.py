@@ -2,7 +2,7 @@
 from __future__ import annotations
 from datetime import datetime, date, time as dtime, timezone
 from .engine import astro, chinese, numerology, geo
-from . import reading, wheel
+from . import reading, wheel, health
 
 MIN_YEAR, MAX_YEAR = 1900, 2050   # JPL DE421 covers 1899-07-29 .. 2053-10-09; Chiron table 1900-2100
 
@@ -60,6 +60,7 @@ def build(d: dict) -> dict:
     name = (d.get("name") or "").strip()[:80] or None
     num = numerology.compute(bd.year, bd.month, bd.day, name)
     rd = reading.generate(chart, ch, num, name)
+    rd["health"] = health.generate(chart, ch, num)
     D = reading.lib("misc")["disclaimers"]
     warns = []
     for w in rt["warnings"]:
