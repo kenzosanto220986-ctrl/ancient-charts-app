@@ -4,6 +4,19 @@ from datetime import datetime, date, time as dtime, timezone
 from .engine import astro, chinese, numerology, geo
 from . import reading, wheel, health
 
+
+def _plain(o):
+    """Convert numpy scalars/arrays to plain Python so the result is always JSON-serialisable."""
+    if isinstance(o, dict):
+        return {k: _plain(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_plain(v) for v in o]
+    if hasattr(o, "item") and hasattr(o, "dtype") and getattr(o, "ndim", 0) == 0:
+        return o.item()
+    if hasattr(o, "tolist"):
+        return o.tolist()
+    return o
+
 MIN_YEAR, MAX_YEAR = 1900, 2050   # JPL DE421 covers 1899-07-29 .. 2053-10-09; Chiron table 1900-2100
 
 
@@ -83,4 +96,4 @@ def _clean(chart):
     out = dict(chart)
     if "cusps" in chart:
         out["cusps"] = {str(k): v for k, v in chart["cusps"].items()}
-    return out
+    return _plain(out)
